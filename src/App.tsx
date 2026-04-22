@@ -1,7 +1,9 @@
-import React, { useState, useRef, ChangeEvent, DragEvent } from 'react';
+import { useState, useRef } from 'react';
+import type { ChangeEvent, DragEvent } from 'react';
 import { UploadCloud, FileType, Type, Download, Loader2, CheckCircle2, Trash2, Eye } from 'lucide-react';
 import { convertTtfToBdf } from './ttfToBdf';
-import { parseBdf, BdfChar } from './bdfParser';
+import { parseBdf } from './bdfParser';
+import type { BdfChar } from './bdfParser';
 import JSZip from 'jszip';
 
 function App() {

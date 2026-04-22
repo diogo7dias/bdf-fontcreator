@@ -33,7 +33,7 @@ export async function convertTtfToBdf(fontBuffer: ArrayBuffer, fontSize: number)
     
     // We can also export glyphs without unicode, but standard BDF uses ENCODING
     
-    const advanceWidth = Math.round(glyph.advanceWidth * scale);
+    const advanceWidth = Math.round((glyph.advanceWidth || 0) * scale);
     const boundingBox = glyph.getBoundingBox();
     
     const bbXMin = Math.floor(boundingBox.x1 * scale);
