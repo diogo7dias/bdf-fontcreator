@@ -1,121 +1,187 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useRef, ChangeEvent, DragEvent } from 'react';
+import { UploadCloud, FileType, Type, Download, Loader2, CheckCircle2 } from 'lucide-react';
+import { convertTtfToBdf } from './ttfToBdf';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [file, setFile] = useState<File | null>(null);
+  const [fontSize, setFontSize] = useState<number>(16);
+  const [isConverting, setIsConverting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(false);
+  };
+
+  const processFile = (selectedFile: File) => {
+    if (!selectedFile.name.toLowerCase().endsWith('.ttf')) {
+      setError('Please select a valid .ttf font file.');
+      return;
+    }
+    setFile(selectedFile);
+    setError(null);
+    setSuccess(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0]);
+    }
+  };
+
+  const handleConvert = async () => {
+    if (!file) return;
+    
+    setIsConverting(true);
+    setError(null);
+    
+    try {
+      const buffer = await file.arrayBuffer();
+      // Allow browser to render UI before heavy CPU work
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const bdfText = await convertTtfToBdf(buffer, fontSize);
+      
+      const blob = new Blob([bdfText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name.replace(/\.ttf$/i, '') + '_' + fontSize + 'px.bdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setSuccess(true);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'An error occurred during conversion.');
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="container">
+      <header className="header">
+        <h1>FontForge Web</h1>
+        <p>Convert TrueType Fonts (.ttf) to Bitmap Distribution Format (.bdf) instantly in your browser.</p>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="card">
+        {!file ? (
+          <div 
+            className={`dropzone ${isDragActive ? 'active' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="dropzone-icon">
+              <UploadCloud size={48} strokeWidth={1.5} />
+            </div>
+            <h3>Drag & Drop your TTF file here</h3>
+            <p>or click to browse from your computer</p>
+            <input 
+              type="file" 
+              accept=".ttf" 
+              ref={fileInputRef} 
+              style={{ display: 'none' }} 
+              onChange={handleFileInput}
+            />
+          </div>
+        ) : (
+          <div className="conversion-panel">
+            <div className="file-info">
+              <div className="file-details">
+                <FileType className="file-icon" size={32} />
+                <div>
+                  <div className="file-name">{file.name}</div>
+                  <div className="file-size">{formatFileSize(file.size)}</div>
+                </div>
+              </div>
+              <button 
+                className="btn-clear" 
+                onClick={() => { setFile(null); setSuccess(false); }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Change file
+              </button>
+            </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            <div className="controls">
+              <div className="control-group">
+                <label htmlFor="fontSize">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Type size={16} /> Output Pixel Size
+                  </div>
+                </label>
+                <input 
+                  type="number" 
+                  id="fontSize" 
+                  min="8" 
+                  max="128" 
+                  value={fontSize} 
+                  onChange={(e) => setFontSize(parseInt(e.target.value) || 16)} 
+                />
+              </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+              {error && (
+                <div className="error-msg">
+                  {error}
+                </div>
+              )}
+
+              <button 
+                className={`btn ${success ? 'success' : ''}`} 
+                onClick={handleConvert}
+                disabled={isConverting}
+              >
+                {isConverting ? (
+                  <>
+                    <Loader2 className="animate-spin" /> Converting...
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle2 /> Downloaded Successfully
+                  </>
+                ) : (
+                  <>
+                    <Download /> Convert to BDF
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
