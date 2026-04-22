@@ -5,7 +5,28 @@ export interface BdfChar {
   height: number;
   xOffset: number;
   yOffset: number;
-  bitmap: boolean[][]; // [y][x] where true means pixel is colored
+  hexData: string[];
+}
+
+export function decodeHexToBitmap(width: number, height: number, hexData: string[]): boolean[][] {
+  const bitmap: boolean[][] = [];
+  for (let y = 0; y < height; y++) {
+    const hexLine = hexData[y] || '';
+    const rowBits: boolean[] = [];
+    for (let b = 0; b < hexLine.length; b += 2) {
+      const byteStr = hexLine.substring(b, b + 2);
+      if (byteStr.length === 2) {
+        const byte = parseInt(byteStr, 16);
+        for (let bit = 0; bit < 8; bit++) {
+          if (rowBits.length < width) {
+            rowBits.push((byte & (1 << (7 - bit))) !== 0);
+          }
+        }
+      }
+    }
+    bitmap.push(rowBits);
+  }
+  return bitmap;
 }
 
 export function parseBdf(bdfText: string): BdfChar[] {
@@ -18,7 +39,7 @@ export function parseBdf(bdfText: string): BdfChar[] {
       const name = lines[i].split(' ')[1] || 'unknown';
       let encoding = -1;
       let width = 0, height = 0, xOffset = 0, yOffset = 0;
-      let bitmap: boolean[][] = [];
+      let hexData: string[] = [];
       
       i++;
       while (i < lines.length && !lines[i].startsWith('ENDCHAR')) {
@@ -34,32 +55,16 @@ export function parseBdf(bdfText: string): BdfChar[] {
           i++;
           for (let y = 0; y < height; y++) {
             if (i >= lines.length || lines[i].startsWith('ENDCHAR')) break;
-            
-            const hexLine = lines[i];
-            const rowBits: boolean[] = [];
-            
-            for (let b = 0; b < hexLine.length; b += 2) {
-              const byteStr = hexLine.substring(b, b + 2);
-              if (byteStr.length === 2) {
-                const byte = parseInt(byteStr, 16);
-                for (let bit = 0; bit < 8; bit++) {
-                  if (rowBits.length < width) {
-                    rowBits.push((byte & (1 << (7 - bit))) !== 0);
-                  }
-                }
-              }
-            }
-            bitmap.push(rowBits);
+            hexData.push(lines[i]);
             i++;
           }
-          continue; // Already advanced i appropriately for the BITMAP lines
+          continue;
         }
         i++;
       }
       
-      // Only add valid characters
       if (width > 0 && height > 0) {
-        chars.push({ name, encoding, width, height, xOffset, yOffset, bitmap });
+        chars.push({ name, encoding, width, height, xOffset, yOffset, hexData });
       }
     } else {
       i++;

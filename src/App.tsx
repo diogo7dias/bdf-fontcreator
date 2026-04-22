@@ -1,10 +1,29 @@
 import { useState, useRef } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
-import { UploadCloud, FileType, Type, Download, Loader2, CheckCircle2, Trash2, Eye } from 'lucide-react';
+import { UploadCloud, FileType, Type, Download, Loader2, CheckCircle2, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { convertTtfToBdf } from './ttfToBdf';
-import { parseBdf } from './bdfParser';
+import { parseBdf, decodeHexToBitmap } from './bdfParser';
 import type { BdfChar } from './bdfParser';
 import JSZip from 'jszip';
+
+// Render a single BDF Character Card
+function CharCard({ char }: { char: BdfChar }) {
+  const bitmap = decodeHexToBitmap(char.width, char.height, char.hexData);
+  return (
+    <div className="bdf-char-card">
+      <h4>{char.name}</h4>
+      <div className="pixel-grid">
+        {bitmap.map((row, y) => (
+          <div key={y} className="pixel-row">
+            {row.map((isOn, x) => (
+              <div key={x} className={`pixel ${isOn ? 'on' : 'off'}`} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState<'convert' | 'view'>('convert');
@@ -19,6 +38,8 @@ function App() {
   // Viewer State
   const [bdfChars, setBdfChars] = useState<BdfChar[] | null>(null);
   const [viewFileName, setViewFileName] = useState<string | null>(null);
+  const [viewerPage, setViewerPage] = useState<number>(1);
+  const charsPerPage = 50;
 
   const [isDragActive, setIsDragActive] = useState(false);
   
@@ -67,14 +88,17 @@ function App() {
       return;
     }
     setError(null);
+    
+    // We parse in a slight timeout so the UI can render a "loading" state if we wanted to
     try {
       const text = await file.text();
       const chars = parseBdf(text);
       setBdfChars(chars);
       setViewFileName(file.name);
+      setViewerPage(1);
     } catch (err) {
       console.error(err);
-      setError("Failed to parse BDF file.");
+      setError("Failed to parse BDF file. It might be corrupted or too large.");
     }
   }
 
@@ -127,7 +151,6 @@ function App() {
     setError(null);
     
     try {
-      // Allow browser to render UI before heavy CPU work
       await new Promise(resolve => setTimeout(resolve, 50));
       
       const isMultiple = files.length > 1 || sizes.length > 1;
@@ -182,6 +205,10 @@ function App() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  // Viewer Pagination Logic
+  const totalPages = bdfChars ? Math.ceil(bdfChars.length / charsPerPage) : 0;
+  const currentChars = bdfChars ? bdfChars.slice((viewerPage - 1) * charsPerPage, viewerPage * charsPerPage) : [];
 
   return (
     <div className="container">
@@ -351,33 +378,64 @@ function App() {
             ) : (
               <div className="viewer-panel">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '2px dashed var(--border-color)', paddingBottom: '1rem' }}>
-                  <h3 style={{ textTransform: 'uppercase' }}>Viewing: {viewFileName}</h3>
+                  <h3 style={{ textTransform: 'uppercase', fontSize: '1rem', wordBreak: 'break-all' }}>{viewFileName}</h3>
                   <button 
                     onClick={() => { setBdfChars(null); setViewFileName(null); }}
                     style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}
                   >
-                    View Another File
+                    Close
                   </button>
                 </div>
                 
-                <p style={{ marginBottom: '1rem' }}>Found {bdfChars.length} characters.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <p>Found {bdfChars.length} characters.</p>
+                  
+                  {totalPages > 1 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <button 
+                        disabled={viewerPage === 1}
+                        onClick={() => setViewerPage(p => Math.max(1, p - 1))}
+                        style={{ background: 'none', border: 'none', color: viewerPage === 1 ? '#555' : '#fff', cursor: viewerPage === 1 ? 'not-allowed' : 'pointer' }}
+                      >
+                        <ChevronLeft size={24} />
+                      </button>
+                      <span>Page {viewerPage} of {totalPages}</span>
+                      <button 
+                        disabled={viewerPage === totalPages}
+                        onClick={() => setViewerPage(p => Math.min(totalPages, p + 1))}
+                        style={{ background: 'none', border: 'none', color: viewerPage === totalPages ? '#555' : '#fff', cursor: viewerPage === totalPages ? 'not-allowed' : 'pointer' }}
+                      >
+                        <ChevronRight size={24} />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <div className="bdf-grid">
-                  {bdfChars.map((char, i) => (
-                    <div key={i} className="bdf-char-card">
-                      <h4>{char.name}</h4>
-                      <div className="pixel-grid">
-                        {char.bitmap.map((row, y) => (
-                          <div key={y} className="pixel-row">
-                            {row.map((isOn, x) => (
-                              <div key={x} className={`pixel ${isOn ? 'on' : 'off'}`} />
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  {currentChars.map((char, i) => (
+                    <CharCard key={`${viewerPage}-${i}`} char={char} />
                   ))}
                 </div>
+                
+                {totalPages > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
+                      <button 
+                        disabled={viewerPage === 1}
+                        onClick={() => setViewerPage(p => Math.max(1, p - 1))}
+                        style={{ background: 'none', border: 'none', color: viewerPage === 1 ? '#555' : '#fff', cursor: viewerPage === 1 ? 'not-allowed' : 'pointer' }}
+                      >
+                        <ChevronLeft size={24} />
+                      </button>
+                      <span>Page {viewerPage} of {totalPages}</span>
+                      <button 
+                        disabled={viewerPage === totalPages}
+                        onClick={() => setViewerPage(p => Math.min(totalPages, p + 1))}
+                        style={{ background: 'none', border: 'none', color: viewerPage === totalPages ? '#555' : '#fff', cursor: viewerPage === totalPages ? 'not-allowed' : 'pointer' }}
+                      >
+                        <ChevronRight size={24} />
+                      </button>
+                    </div>
+                  )}
               </div>
             )}
           </>
