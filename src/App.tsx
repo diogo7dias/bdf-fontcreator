@@ -89,8 +89,8 @@ function App() {
   return (
     <div className="container">
       <header className="header">
-        <h1>FontForge Web</h1>
-        <p>Convert TrueType Fonts (.ttf) to Bitmap Distribution Format (.bdf) instantly in your browser.</p>
+        <h1>ttf into bdf</h1>
+        <p>convert truetype to bitmap distribution format</p>
       </header>
 
       <main className="card">

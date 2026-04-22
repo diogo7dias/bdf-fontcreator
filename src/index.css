@@ -1,13 +1,13 @@
 :root {
-  --font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  --bg-color: #0f172a;
-  --panel-bg: #1e293b;
-  --border-color: #334155;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --accent: #10b981;
+  --font-family: 'Courier New', Courier, monospace;
+  --bg-color: #000000;
+  --panel-bg: #000000;
+  --border-color: #ffffff;
+  --primary: #ffffff;
+  --primary-hover: #cccccc;
+  --text-main: #ffffff;
+  --text-muted: #aaaaaa;
+  --accent: #ffffff;
 }
 
 * {
@@ -23,6 +23,26 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-image: 
+    linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222),
+    linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222);
+  background-position: 0 0, 20px 20px;
+  background-size: 40px 40px;
+  animation: moveSquares 5s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes moveSquares {
+  from { background-position: 0 0, 20px 20px; }
+  to { background-position: 40px 40px, 60px 60px; }
 }
 
 .container {
@@ -35,45 +55,49 @@ body {
 .header {
   text-align: center;
   margin-bottom: 3rem;
-  animation: fadeInDown 0.6s ease-out;
+  background-color: #000;
+  padding: 1rem;
+  border: 2px dashed var(--border-color);
 }
 
 .header h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #60a5fa, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
   margin-bottom: 1rem;
 }
 
 .header p {
   font-size: 1.1rem;
-  color: var(--text-muted);
+  color: var(--text-main);
 }
 
 .card {
   background-color: var(--panel-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border: 2px dashed var(--border-color);
   padding: 2rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: fadeInUp 0.6s ease-out;
 }
 
 .dropzone {
   border: 2px dashed var(--border-color);
-  border-radius: 12px;
   padding: 3rem 2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: rgba(15, 23, 42, 0.5);
+  background-color: #000;
+  transition: all 0.2s steps(2);
 }
 
 .dropzone:hover, .dropzone.active {
-  border-color: var(--primary);
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.dropzone:hover .dropzone-icon,
+.dropzone.active .dropzone-icon,
+.dropzone:hover p,
+.dropzone.active p {
+  color: #000000;
 }
 
 .dropzone-icon {
@@ -86,10 +110,11 @@ body {
 .dropzone h3 {
   font-size: 1.25rem;
   margin-bottom: 0.5rem;
+  text-transform: uppercase;
 }
 
 .dropzone p {
-  color: var(--text-muted);
+  color: var(--text-main);
   font-size: 0.9rem;
 }
 
@@ -97,10 +122,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgba(15, 23, 42, 0.5);
-  border: 1px solid var(--border-color);
+  background-color: #000;
+  border: 2px dashed var(--border-color);
   padding: 1rem 1.5rem;
-  border-radius: 8px;
   margin-bottom: 2rem;
 }
 
@@ -111,16 +135,16 @@ body {
 }
 
 .file-icon {
-  color: var(--accent);
+  color: var(--primary);
 }
 
 .file-name {
-  font-weight: 600;
+  font-weight: bold;
   font-size: 1.1rem;
 }
 
 .file-size {
-  color: var(--text-muted);
+  color: var(--text-main);
   font-size: 0.85rem;
 }
 
@@ -137,84 +161,70 @@ body {
 }
 
 .control-group label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--text-main);
+  text-transform: uppercase;
 }
 
 .control-group input {
-  background-color: var(--bg-color);
-  border: 1px solid var(--border-color);
+  background-color: #000;
+  border: 2px dashed var(--border-color);
   color: var(--text-main);
   padding: 0.75rem 1rem;
-  border-radius: 8px;
   font-size: 1rem;
   width: 100%;
-  transition: border-color 0.2s;
+  font-family: var(--font-family);
 }
 
 .control-group input:focus {
   outline: none;
-  border-color: var(--primary);
+  background-color: #222;
 }
 
 .btn {
-  background-color: var(--primary);
-  color: white;
-  border: none;
+  background-color: #000;
+  color: #fff;
+  border: 2px dashed var(--border-color);
   padding: 1rem 2rem;
-  border-radius: 8px;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
   margin-top: 1rem;
+  font-family: var(--font-family);
+  text-transform: uppercase;
 }
 
 .btn:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background-color: #fff;
+  color: #000;
 }
 
 .btn:disabled {
-  background-color: var(--border-color);
+  border-style: dotted;
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.5;
 }
 
 .btn.success {
-  background-color: var(--accent);
-}
-
-.btn.success:hover:not(:disabled) {
-  background-color: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  background-color: #fff;
+  color: #000;
+  border-style: solid;
 }
 
 .error-msg {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid #ef4444;
-  color: #fca5a5;
+  background-color: #000;
+  border: 2px dashed var(--border-color);
+  color: #fff;
   padding: 1rem;
-  border-radius: 8px;
   margin-top: 1rem;
   font-size: 0.9rem;
+  text-transform: uppercase;
 }
 
 @keyframes spin {
@@ -223,5 +233,5 @@ body {
 }
 
 .animate-spin {
-  animation: spin 1s linear infinite;
+  animation: spin 1s steps(8) infinite;
 }
