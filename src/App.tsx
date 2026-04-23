@@ -61,15 +61,18 @@ function App() {
     let hasInvalid = false;
     
     Array.from(selectedFiles).forEach(file => {
-      if (file.name.toLowerCase().endsWith('.ttf')) {
-        validFiles.push(file);
-      } else {
+      if (!file.name.toLowerCase().endsWith('.ttf')) {
         hasInvalid = true;
+      } else if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        setError('File too big! Max size 50MB.');
+        hasInvalid = true;
+      } else {
+        validFiles.push(file);
       }
     });
 
     if (hasInvalid && validFiles.length === 0) {
-      setError('Please select valid .ttf font files only.');
+      if (!error) setError('Please select valid .ttf font files under 50MB.');
       return;
     }
 
@@ -85,6 +88,10 @@ function App() {
   const processViewFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.bdf')) {
       setError('Please select a valid .bdf file to view.');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) { // 50MB
+      setError('File too big! Max size 50MB.');
       return;
     }
     setError(null);
