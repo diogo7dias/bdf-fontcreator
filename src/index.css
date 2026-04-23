@@ -68,6 +68,31 @@ body::before {
   margin-bottom: 1rem;
 }
 
+/* Hacker Typewriter Animation */
+.header h1.typewriter {
+  overflow: hidden;
+  border-right: 0.15em solid #0f0; /* The blinking cursor */
+  white-space: nowrap;
+  margin: 0 auto 1rem auto;
+  color: #0f0; /* Hacker green */
+  text-shadow: 0 0 5px #0f0;
+  /* 12 chars + 12 * 2px letter spacing */
+  width: calc(12ch + 24px); 
+  animation: 
+    typing 2s steps(12, end),
+    blink-caret .75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: calc(12ch + 24px); }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #0f0; }
+}
+
 .header p {
   font-size: 1.1rem;
   color: var(--text-main);

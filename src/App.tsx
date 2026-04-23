@@ -248,7 +248,7 @@ function App() {
   return (
     <div className="container">
       <header className="header">
-        <h1>ttf into bdf</h1>
+        <h1 className="typewriter">ttf into bdf</h1>
         <p>convert truetype to bitmap distribution format</p>
       </header>
 
