@@ -492,6 +492,25 @@ function App() {
         <div style={{ marginTop: '1.5rem' }}>
           <img src="https://hits.sh/github.com/diogo7dias/bdf-fontcreator.svg?style=for-the-badge&color=000000" alt="Hit Counter" />
         </div>
+        <div style={{ marginTop: '1.5rem' }}>
+          <a 
+            href="https://ko-fi.com/diogo7dias" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ 
+              color: 'var(--text-main)', 
+              textDecoration: 'none', 
+              fontWeight: 'bold',
+              border: '2px dashed var(--border-color)',
+              padding: '0.5rem 1rem',
+              display: 'inline-block',
+              textTransform: 'uppercase',
+              fontSize: '0.8rem'
+            }}
+          >
+            ☕ Buy me a coffee on Ko-fi
+          </a>
+        </div>
       </footer>
     </div>
   );
