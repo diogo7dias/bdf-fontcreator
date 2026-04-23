@@ -489,6 +489,10 @@ function App() {
             crosspoint-reader-DX34
           </a> custom firmware.
         </p>
+        <div style={{ marginTop: '1.5rem' }}>
+          <p style={{ fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Visitors</p>
+          <img src="https://profile-counter.glitch.me/bdffontcreator/count.svg" alt="Hit Counter" />
+        </div>
       </footer>
     </div>
   );
