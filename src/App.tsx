@@ -135,7 +135,7 @@ function App() {
     return sizesInput
       .split(',')
       .map(s => parseInt(s.trim()))
-      .filter(s => !isNaN(s) && s > 0 && s <= 200);
+      .filter(s => !isNaN(s) && s >= 4 && s <= 255);
   };
 
   const handleConvert = async () => {
@@ -158,11 +158,39 @@ function App() {
 
       for (const file of files) {
         const buffer = await file.arrayBuffer();
-        const baseName = file.name.replace(/\.ttf$/i, '');
+        
+        const baseNameRaw = file.name.replace(/\.ttf$/i, '');
+        const parts = baseNameRaw.split(/[\s_-]+/);
+        let isBold = false;
+        let isItalic = false;
+        const nameParts: string[] = [];
+        
+        for (const part of parts) {
+          const lower = part.toLowerCase();
+          if (lower === 'bold') isBold = true;
+          else if (lower === 'italic' || lower === 'oblique') isItalic = true;
+          else if (lower === 'bolditalic' || lower === 'italicbold') {
+            isBold = true;
+            isItalic = true;
+          } else {
+            nameParts.push(part);
+          }
+        }
+        
+        let parsedName = nameParts.join('-');
+        parsedName = parsedName.replace(/[^a-zA-Z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        if (!parsedName) parsedName = 'font';
+        
+        let variant = '';
+        if (isBold && isItalic) variant = '-bolditalic';
+        else if (isBold) variant = '-bold';
+        else if (isItalic) variant = '-italic';
+        
+        const finalNameBase = `${parsedName}${variant}`;
         
         for (const size of sizes) {
           const bdfText = await convertTtfToBdf(buffer, size);
-          const fileName = `${baseName}_${size}px.bdf`;
+          const fileName = `${finalNameBase}_${size}.bdf`;
           
           if (isMultiple) {
             zip.file(fileName, bdfText);
@@ -441,6 +469,20 @@ function App() {
           </>
         )}
       </main>
+
+      <footer style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem', borderTop: '2px dashed var(--border-color)', paddingTop: '1.5rem', paddingBottom: '1rem' }}>
+        <p>
+          Built to create custom fonts for <strong>xteink</strong> devices running the <br />
+          <a 
+            href="https://github.com/diogo7dias/crosspoint-reader-DX34" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: 'var(--text-main)', textDecoration: 'underline', fontWeight: 'bold' }}
+          >
+            crosspoint-reader-DX34
+          </a> custom firmware.
+        </p>
+      </footer>
     </div>
   );
 }

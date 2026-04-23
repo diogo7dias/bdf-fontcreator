@@ -38,3 +38,7 @@ npm run build
 ## Aesthetic
 
 Features a 90s retro web hacker aesthetic with a pure black & white palette, dashed borders, and a moving CSS-only pixel checkerboard background.
+
+## About xteink
+
+Built to create custom fonts for **xteink** devices running the [crosspoint-reader-DX34](https://github.com/diogo7dias/crosspoint-reader-DX34) custom firmware.
