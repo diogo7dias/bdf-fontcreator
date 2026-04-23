@@ -1,5 +1,7 @@
 # ttf into bdf
 
+![Screenshot](public/screenshot.png)
+
 A totally free, entirely client-side web application that converts TrueType Font (`.ttf`) files into Bitmap Distribution Format (`.bdf`) files directly in your browser. 
 
 Hosted live at: [https://diogo7dias.github.io/bdf-fontcreator/](https://diogo7dias.github.io/bdf-fontcreator/)
