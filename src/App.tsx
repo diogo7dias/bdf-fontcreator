@@ -31,6 +31,7 @@ function App() {
   // Converter State
   const [files, setFiles] = useState<File[]>([]);
   const [sizesInput, setSizesInput] = useState<string>("16, 24");
+  const [emboldenInput, setEmboldenInput] = useState<number>(0);
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -196,7 +197,7 @@ function App() {
         const finalNameBase = `${parsedName}${variant}`;
         
         for (const size of sizes) {
-          const bdfText = await convertTtfToBdf(buffer, size);
+          const bdfText = await convertTtfToBdf(buffer, size, emboldenInput);
           const fileName = `${finalNameBase}_${size}.bdf`;
           
           if (isMultiple) {
@@ -359,6 +360,24 @@ function App() {
                       placeholder="e.g. 12, 16, 24"
                       value={sizesInput} 
                       onChange={(e) => setSizesInput(e.target.value)} 
+                    />
+                  </div>
+
+                  <div className="control-group">
+                    <label htmlFor="embolden">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Type size={16} /> Embolden (Pixels, 0 for off)
+                      </div>
+                    </label>
+                    <input 
+                      type="number" 
+                      id="embolden" 
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      placeholder="e.g. 0, 1, 1.5"
+                      value={emboldenInput} 
+                      onChange={(e) => setEmboldenInput(parseFloat(e.target.value) || 0)} 
                     />
                   </div>
 
