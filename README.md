@@ -4,13 +4,19 @@ A totally free, entirely client-side web application that converts TrueType Font
 
 Hosted live at: [https://diogo7dias.github.io/bdf-fontcreator/](https://diogo7dias.github.io/bdf-fontcreator/)
 
+## Features
+
+- **TTF to BDF Conversion**: Accurately rasterizes vector fonts into bitmap formats.
+- **Batch Processing**: Upload multiple `.ttf` files and specify multiple comma-separated output sizes at once.
+- **Automatic ZIP Bundling**: Batch outputs are automatically bundled into a single `.zip` file for easy downloading.
+- **Built-in BDF Viewer**: Features a massive-file-friendly BDF Viewer. Drop in a `.bdf` file (even 10MB+ files with 60,000+ characters) to instantly view the hex-decoded visual pixel art for every glyph!
+- **100% Client-Side**: No backend servers. Your font files never leave your computer.
+
 ## How it Works
 
-1. **Client-Side Parsing:** We use `opentype.js` to parse the vector math of the TrueType font.
-2. **Rasterization:** The app draws each character onto a hidden HTML5 `<canvas>` element at your specified output pixel size.
-3. **BDF Generation:** We read the raw pixel data from the canvas, construct the bitmap matrix for each character, and generate a `.bdf` file perfectly formatted to the BDF 2.1 specification.
-
-Since everything runs in the browser, your font files are **never uploaded to any server**.
+1. **Parsing:** We use `opentype.js` to parse the vector math of the TrueType font.
+2. **Rasterization:** The app draws each character onto a hidden HTML5 `<canvas>` element at your specified output pixel sizes.
+3. **BDF Generation:** We read the raw pixel data from the canvas, construct the bitmap matrix for each character, and generate `.bdf` text perfectly formatted to the BDF 2.1 specification.
 
 ## Development
 
