@@ -490,8 +490,7 @@ function App() {
           </a> custom firmware.
         </p>
         <div style={{ marginTop: '1.5rem' }}>
-          <p style={{ fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Visitors</p>
-          <img src="https://profile-counter.glitch.me/bdffontcreator/count.svg" alt="Hit Counter" />
+          <img src="https://hits.sh/github.com/diogo7dias/bdf-fontcreator.svg?style=for-the-badge&color=000000" alt="Hit Counter" />
         </div>
       </footer>
     </div>
