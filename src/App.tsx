@@ -361,6 +361,9 @@ function App() {
                       value={sizesInput} 
                       onChange={(e) => setSizesInput(e.target.value)} 
                     />
+                    <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
+                      recommend the sizes between 24-34
+                    </div>
                   </div>
 
                   <div className="control-group">
@@ -379,6 +382,9 @@ function App() {
                       value={emboldenInput} 
                       onChange={(e) => setEmboldenInput(parseFloat(e.target.value) || 0)} 
                     />
+                    <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
+                      start with 1 if embolden is needed and go to max 2, no more is recommended, make dark mush
+                    </div>
                   </div>
 
                   <button 
