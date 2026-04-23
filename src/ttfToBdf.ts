@@ -25,11 +25,11 @@ export async function convertTtfToBdf(fontBuffer: ArrayBuffer, fontSize: number)
   bdfLines.push(`ENDPROPERTIES`);
   
   const numGlyphs = font.glyphs.length;
-  bdfLines.push(`CHARS ${numGlyphs}`);
+  const generatedGlyphs: { codepoint: number; lines: string[] }[] = [];
   
   for (let i = 0; i < numGlyphs; i++) {
     const glyph = font.glyphs.get(i);
-    const unicode = glyph.unicode || glyph.unicodes[0] || -1;
+    const unicode = glyph.unicode !== undefined ? glyph.unicode : (glyph.unicodes && glyph.unicodes.length > 0 ? glyph.unicodes[0] : -1);
     
     // We can also export glyphs without unicode, but standard BDF uses ENCODING
     
@@ -44,12 +44,13 @@ export async function convertTtfToBdf(fontBuffer: ArrayBuffer, fontSize: number)
     const bbWidth = Math.max(0, bbXMax - bbXMin);
     const bbHeight = Math.max(0, bbYMax - bbYMin);
 
-    bdfLines.push(`STARTCHAR ${glyph.name || 'char' + i}`);
-    bdfLines.push(`ENCODING ${unicode}`);
-    bdfLines.push(`SWIDTH ${Math.round((advanceWidth / fontSize) * 1000)} 0`);
-    bdfLines.push(`DWIDTH ${advanceWidth} 0`);
-    bdfLines.push(`BBX ${bbWidth} ${bbHeight} ${bbXMin} ${bbYMin}`);
-    bdfLines.push(`BITMAP`);
+    const glyphLines: string[] = [];
+    glyphLines.push(`STARTCHAR ${glyph.name || 'char' + i}`);
+    glyphLines.push(`ENCODING ${unicode}`);
+    glyphLines.push(`SWIDTH ${Math.round((advanceWidth / fontSize) * 1000)} 0`);
+    glyphLines.push(`DWIDTH ${advanceWidth} 0`);
+    glyphLines.push(`BBX ${bbWidth} ${bbHeight} ${bbXMin} ${bbYMin}`);
+    glyphLines.push(`BITMAP`);
 
     if (bbWidth > 0 && bbHeight > 0) {
       canvas.width = bbWidth;
@@ -89,13 +90,45 @@ export async function convertTtfToBdf(fontBuffer: ArrayBuffer, fontSize: number)
           }
           hexRow += byteValue.toString(16).padStart(2, '0').toUpperCase();
         }
-        bdfLines.push(hexRow);
+        glyphLines.push(hexRow);
       }
     }
     
-    bdfLines.push(`ENDCHAR`);
+    glyphLines.push(`ENDCHAR`);
+    generatedGlyphs.push({ codepoint: unicode, lines: glyphLines });
+  }
+
+  // Sort by codepoint ascending
+  generatedGlyphs.sort((a, b) => a.codepoint - b.codepoint);
+
+  // Deduplicate
+  const seen = new Set<number>();
+  const finalGlyphs: { codepoint: number; lines: string[] }[] = [];
+  for (const g of generatedGlyphs) {
+    if (!seen.has(g.codepoint)) {
+      seen.add(g.codepoint);
+      finalGlyphs.push(g);
+    }
+  }
+
+  bdfLines.push(`CHARS ${finalGlyphs.length}`);
+  for (const g of finalGlyphs) {
+    bdfLines.push(...g.lines);
   }
   
   bdfLines.push(`ENDFONT`);
+  
+  // Validation
+  const encodings: number[] = [];
+  for (const line of bdfLines) {
+    if (line.startsWith('ENCODING ')) {
+      encodings.push(parseInt(line.split(' ')[1]));
+    }
+  }
+  const isSortedAndUnique = encodings.every((val, i, arr) => !i || (val > arr[i - 1]));
+  if (!isSortedAndUnique) {
+    throw new Error("BDF output not strictly ascending by codepoint");
+  }
+  
   return bdfLines.join('\n');
 }
