@@ -31,7 +31,7 @@ function App() {
   // Converter State
   const [files, setFiles] = useState<File[]>([]);
   const [sizesInput, setSizesInput] = useState<string>("16, 24");
-  const [emboldenInput, setEmboldenInput] = useState<number>(0);
+  // const [emboldenInput, setEmboldenInput] = useState<number>(0);
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -197,7 +197,7 @@ function App() {
         const finalNameBase = `${parsedName}${variant}`;
         
         for (const size of sizes) {
-          const bdfText = await convertTtfToBdf(buffer, size, emboldenInput);
+          const bdfText = await convertTtfToBdf(buffer, size /*, emboldenInput*/);
           const fileName = `${finalNameBase}_${size}.bdf`;
           
           if (isMultiple) {
@@ -366,7 +366,7 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="control-group">
+                  {/* <div className="control-group">
                     <label htmlFor="embolden">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Type size={16} /> Embolden (Pixels, 0 for off)
@@ -385,7 +385,7 @@ function App() {
                     <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
                       start with 1 if embolden is needed and go to max 2, no more is recommended, make dark mush
                     </div>
-                  </div>
+                  </div> */}
 
                   <button 
                     className={`btn ${success ? 'success' : ''}`} 
