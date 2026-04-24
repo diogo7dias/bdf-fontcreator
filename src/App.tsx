@@ -31,7 +31,9 @@ function App() {
   // Converter State
   const [files, setFiles] = useState<File[]>([]);
   const [sizesInput, setSizesInput] = useState<string>("16, 24");
-  // const [emboldenInput, setEmboldenInput] = useState<number>(0);
+  const [thresholdInput, setThresholdInput] = useState<number>(128);
+  const [supersampleInput, setSupersampleInput] = useState<number>(2);
+  const [emboldenInput, setEmboldenInput] = useState<number>(0);
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -197,7 +199,11 @@ function App() {
         const finalNameBase = `${parsedName}${variant}`;
         
         for (const size of sizes) {
-          const bdfText = await convertTtfToBdf(buffer, size /*, emboldenInput*/);
+          const bdfText = await convertTtfToBdf(buffer, size, {
+            threshold: thresholdInput,
+            supersample: supersampleInput,
+            embolden: emboldenInput,
+          });
           const fileName = `${finalNameBase}_${size}.bdf`;
           
           if (isMultiple) {
@@ -366,26 +372,65 @@ function App() {
                     </div>
                   </div>
 
-                  {/* <div className="control-group">
-                    <label htmlFor="embolden">
+                  <div className="control-group">
+                    <label htmlFor="threshold">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Type size={16} /> Embolden (Pixels, 0 for off)
+                        <Type size={16} /> Ink Threshold (1-254)
                       </div>
                     </label>
-                    <input 
-                      type="number" 
-                      id="embolden" 
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      placeholder="e.g. 0, 1, 1.5"
-                      value={emboldenInput} 
-                      onChange={(e) => setEmboldenInput(parseFloat(e.target.value) || 0)} 
+                    <input
+                      type="number"
+                      id="threshold"
+                      min="1"
+                      max="254"
+                      step="1"
+                      value={thresholdInput}
+                      onChange={(e) => setThresholdInput(parseInt(e.target.value) || 128)}
                     />
                     <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
-                      start with 1 if embolden is needed and go to max 2, no more is recommended, make dark mush
+                      lower = thinner strokes, higher = heavier. default 128. try 96 for thin fonts, 160 for heavy.
                     </div>
-                  </div> */}
+                  </div>
+
+                  <div className="control-group">
+                    <label htmlFor="supersample">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Type size={16} /> Supersample (1-4)
+                      </div>
+                    </label>
+                    <input
+                      type="number"
+                      id="supersample"
+                      min="1"
+                      max="4"
+                      step="1"
+                      value={supersampleInput}
+                      onChange={(e) => setSupersampleInput(parseInt(e.target.value) || 2)}
+                    />
+                    <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
+                      gamma-correct downsampling. 2 is recommended, 3-4 for very small sizes. 1 disables.
+                    </div>
+                  </div>
+
+                  <div className="control-group">
+                    <label htmlFor="embolden">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Type size={16} /> Embolden (0-3 px)
+                      </div>
+                    </label>
+                    <input
+                      type="number"
+                      id="embolden"
+                      min="0"
+                      max="3"
+                      step="1"
+                      value={emboldenInput}
+                      onChange={(e) => setEmboldenInput(parseInt(e.target.value) || 0)}
+                    />
+                    <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
+                      horizontal dilation after rasterize. 0 = off. 1 usually plenty. higher = dark mush.
+                    </div>
+                  </div>
 
                   <button 
                     className={`btn ${success ? 'success' : ''}`} 
