@@ -9,7 +9,9 @@ Hosted live at: [https://diogo7dias.github.io/bdf-fontcreator/](https://diogo7di
 ## Features
 
 - **TTF to BDF Conversion**: Accurately rasterizes vector fonts into bitmap formats.
-- **Batch Processing**: Upload multiple `.ttf` files and specify multiple comma-separated output sizes at once.
+- **Auto-Tuning for E-Ink**: Inspects each font's weight, style, and serif/sans class and picks the best ink threshold, supersample factor, and embolden amount per size. No dials to turn — drop the TTF and download BDFs that look good on xteink devices.
+- **Smart Size Suggestion**: Sizes are pre-filled to match the DX34 firmware's reader range. Override them if you need something different.
+- **Batch Processing**: Upload multiple `.ttf` files at once; each is auto-tuned independently.
 - **Automatic ZIP Bundling**: Batch outputs are automatically bundled into a single `.zip` file for easy downloading.
 - **Built-in BDF Viewer**: Features a massive-file-friendly BDF Viewer. Drop in a `.bdf` file (even 10MB+ files with 60,000+ characters) to instantly view the hex-decoded visual pixel art for every glyph!
 - **100% Client-Side**: No backend servers. Your font files never leave your computer.

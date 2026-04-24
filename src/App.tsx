@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { UploadCloud, FileType, Type, Download, Loader2, CheckCircle2, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { convertTtfToBdf } from './ttfToBdf';
+import { analyzeFont, describeProfile, pickSettings, suggestSizes } from './autoTune';
+import type { FontProfile } from './autoTune';
 import { parseBdf, decodeHexToBitmap } from './bdfParser';
 import type { BdfChar } from './bdfParser';
 import JSZip from 'jszip';
@@ -30,10 +32,8 @@ function App() {
   
   // Converter State
   const [files, setFiles] = useState<File[]>([]);
-  const [sizesInput, setSizesInput] = useState<string>("16, 24");
-  const [thresholdInput, setThresholdInput] = useState<number>(128);
-  const [supersampleInput, setSupersampleInput] = useState<number>(2);
-  const [emboldenInput, setEmboldenInput] = useState<number>(0);
+  const [sizesInput, setSizesInput] = useState<string>("12, 14, 16");
+  const [detectedProfile, setDetectedProfile] = useState<FontProfile | null>(null);
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -62,7 +62,7 @@ function App() {
   const processConvertFiles = (selectedFiles: FileList | File[]) => {
     const validFiles: File[] = [];
     let hasInvalid = false;
-    
+
     Array.from(selectedFiles).forEach(file => {
       if (!file.name.toLowerCase().endsWith('.ttf')) {
         hasInvalid = true;
@@ -79,6 +79,7 @@ function App() {
       return;
     }
 
+    const isFirstBatch = files.length === 0 && validFiles.length > 0;
     setFiles(prev => [...prev, ...validFiles]);
     if (hasInvalid) {
       setError('Some files were ignored because they were not .ttf files.');
@@ -86,6 +87,19 @@ function App() {
       setError(null);
     }
     setSuccess(false);
+
+    if (isFirstBatch) {
+      const firstFile = validFiles[0];
+      firstFile.arrayBuffer()
+        .then(buffer => {
+          const profile = analyzeFont(buffer);
+          setDetectedProfile(profile);
+          setSizesInput(suggestSizes(profile).join(', '));
+        })
+        .catch(err => {
+          console.error('Font analysis failed', err);
+        });
+    }
   };
 
   const processViewFile = async (file: File) => {
@@ -137,8 +151,10 @@ function App() {
   };
 
   const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index));
+    const next = files.filter((_, i) => i !== index);
+    setFiles(next);
     setSuccess(false);
+    if (next.length === 0) setDetectedProfile(null);
   };
 
   const parseSizes = (): number[] => {
@@ -168,7 +184,8 @@ function App() {
 
       for (const file of files) {
         const buffer = await file.arrayBuffer();
-        
+        const profile = analyzeFont(buffer);
+
         const baseNameRaw = file.name.replace(/\.ttf$/i, '');
         const parts = baseNameRaw.split(/[\s_-]+/);
         let isBold = false;
@@ -199,11 +216,7 @@ function App() {
         const finalNameBase = `${parsedName}${variant}`;
         
         for (const size of sizes) {
-          const bdfText = await convertTtfToBdf(buffer, size, {
-            threshold: thresholdInput,
-            supersample: supersampleInput,
-            embolden: emboldenInput,
-          });
+          const bdfText = await convertTtfToBdf(buffer, size, pickSettings(profile, size));
           const fileName = `${finalNameBase}_${size}.bdf`;
           
           if (isMultiple) {
@@ -336,8 +349,8 @@ function App() {
                     >
                       + add more files
                     </button>
-                    <button 
-                      onClick={() => { setFiles([]); setSuccess(false); }}
+                    <button
+                      onClick={() => { setFiles([]); setSuccess(false); setDetectedProfile(null); }}
                       style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}
                     >
                       clear all
@@ -354,85 +367,31 @@ function App() {
                 </div>
 
                 <div className="controls">
+                  {detectedProfile && (
+                    <div style={{ fontSize: '0.85rem', marginBottom: '1.5rem', padding: '0.75rem 1rem', border: '1px dashed var(--text-main)' }}>
+                      Detected: <strong>{detectedProfile.family}</strong> — {describeProfile(detectedProfile)}. Auto-tuned for xteink.
+                    </div>
+                  )}
+
                   <div className="control-group">
                     <label htmlFor="fontSizes">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Type size={16} /> Output Pixel Sizes (comma separated)
                       </div>
                     </label>
-                    <input 
-                      type="text" 
-                      id="fontSizes" 
-                      placeholder="e.g. 12, 16, 24"
-                      value={sizesInput} 
-                      onChange={(e) => setSizesInput(e.target.value)} 
-                    />
-                    <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
-                      recommend the sizes between 24-34
-                    </div>
-                  </div>
-
-                  <div className="control-group">
-                    <label htmlFor="threshold">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Type size={16} /> Ink Threshold (1-254)
-                      </div>
-                    </label>
                     <input
-                      type="number"
-                      id="threshold"
-                      min="1"
-                      max="254"
-                      step="1"
-                      value={thresholdInput}
-                      onChange={(e) => setThresholdInput(parseInt(e.target.value) || 128)}
+                      type="text"
+                      id="fontSizes"
+                      placeholder="e.g. 12, 14, 16"
+                      value={sizesInput}
+                      onChange={(e) => setSizesInput(e.target.value)}
                     />
                     <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
-                      lower = thinner strokes, higher = heavier. default 128. try 96 for thin fonts, 160 for heavy.
+                      auto-suggested from your font. edit if you want custom sizes. everything else is auto-tuned per font + size.
                     </div>
                   </div>
 
-                  <div className="control-group">
-                    <label htmlFor="supersample">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Type size={16} /> Supersample (1-4)
-                      </div>
-                    </label>
-                    <input
-                      type="number"
-                      id="supersample"
-                      min="1"
-                      max="4"
-                      step="1"
-                      value={supersampleInput}
-                      onChange={(e) => setSupersampleInput(parseInt(e.target.value) || 2)}
-                    />
-                    <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
-                      gamma-correct downsampling. 2 is recommended, 3-4 for very small sizes. 1 disables.
-                    </div>
-                  </div>
-
-                  <div className="control-group">
-                    <label htmlFor="embolden">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Type size={16} /> Embolden (0-3 px)
-                      </div>
-                    </label>
-                    <input
-                      type="number"
-                      id="embolden"
-                      min="0"
-                      max="3"
-                      step="1"
-                      value={emboldenInput}
-                      onChange={(e) => setEmboldenInput(parseInt(e.target.value) || 0)}
-                    />
-                    <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#aaa' }}>
-                      horizontal dilation after rasterize. 0 = off. 1 usually plenty. higher = dark mush.
-                    </div>
-                  </div>
-
-                  <button 
+                  <button
                     className={`btn ${success ? 'success' : ''}`} 
                     onClick={handleConvert}
                     disabled={isConverting || files.length === 0}
